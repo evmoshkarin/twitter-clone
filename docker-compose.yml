@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  db:
+   image: postgres:15-alpine
+   environment:
+     POSTGRES_DB: twitter_clone
+     POSTGRES_USER: postgres
+     POSTGRES_PASSWORD: postgres
+   volumes:
+     - postgres_data:/var/lib/postgresql/data
+  # ports:              # закомментировали
+  #   - "5434:5432"     # если нужен внешний доступ, раскомментируйте и укажите свободный порт
+   healthcheck:
+     test: ["CMD-SHELL", "pg_isready -U postgres"]
+     interval: 10s
+     timeout: 5s
+     retries: 5
+
+  web:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/twitter_clone
+      FLASK_ENV: production
+      SECRET_KEY: your-secret-key
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./app/static/uploads:/app/app/static/uploads
+
+volumes:
+  postgres_data:
